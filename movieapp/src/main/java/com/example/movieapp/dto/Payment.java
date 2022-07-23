@@ -16,8 +16,9 @@ import java.time.LocalDateTime;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Payment {
 
+public class Payment {
+    private int userId;
     private LocalDateTime paymentDate;
     @Enumerated(EnumType.STRING)
     private CurrencyType currencyType;

@@ -1,8 +1,7 @@
 package com.example.movieapp.service;
 
 import com.example.movieapp.client.PaymentClient;
-import com.example.movieapp.dto.Payment;
-import com.example.movieapp.dto.UserLoginRequest;
+import com.example.movieapp.dto.*;
 import com.example.movieapp.enums.CurrencyType;
 import com.example.movieapp.model.User;
 import com.example.movieapp.repository.SubscriptionPriceRepository;
@@ -14,7 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -39,16 +40,25 @@ public class UserService {
     private String USERNOTFOUND_MESSAGE;
 
     //Kullanıcı sisteme kayıt olur:
-    public String register(User user) {
-        subscriptionPriceService.addSubscriptionPrices();
-        movieService.addMovies();
+    public String register(UserRegisterRequest userRegisterRequest) {
+        //Uygulama başlarken db'de movies tablosuna birkaç film ve subscriptionprice tablosuna bilgiler eklenir.
+
+        //Request'ten alınan datanın yeni oluşturulan user'a set edilmesi:
+        User user = new User();
+        user.setName(userRegisterRequest.getName());
+        user.setSurname(userRegisterRequest.getSurname());
+        user.setEmail(userRegisterRequest.getEmail());
+        user.setSubscriptionType(userRegisterRequest.getSubscriptionType());
+
+        //Şifrenin hash algoritması ile db'ye kaydedilmesini sağlar.
+        user.setPassword(encryptor.encryptGivenPassword(userRegisterRequest.getEmail(), userRegisterRequest.getPassword()));
+
+        //User'ı db'ye kaydeder:
+        userRepository.save(user);
+
         //Ödeme yapılmasını sağlar.
         Payment payment = paymentClient.createPayment(preparePaymentInfo(user));
         log.info(payment.toString());
-
-        //Şifrenin hash algoritması ile db'ye kaydedilmesini sağlar.
-        user.setPassword(encryptor.encryptGivenPassword(user.getEmail(), user.getPassword()));
-        userRepository.save(user);
 
         return REGISTER_MESSAGE;
 
@@ -67,16 +77,16 @@ public class UserService {
     }
 
     //User'ın password değiştirmesini sağlayan method.
-    public void changePassword(int userId, User user) {
+    public void changePassword(int userId, UserChangePasswordRequest userChangePasswordRequest) {
         User foundUser = userRepository.findById(userId).orElseThrow();
-        foundUser.setPassword(user.getPassword());
+        foundUser.setPassword(userChangePasswordRequest.getPassword());
         userRepository.save(foundUser);
     }
 
     //User'ın name değiştirmesini sağlayan method.
-    public void changeName(int userId, User user) {
+    public void changeName(int userId, UserChangeNameRequest userChangeNameRequest) {
         User foundUser = userRepository.findById(userId).orElseThrow();
-        foundUser.setName(user.getName());
+        foundUser.setName(userChangeNameRequest.getName());
         userRepository.save(foundUser);
     }
 
@@ -105,7 +115,9 @@ public class UserService {
         Payment payment = new Payment();
         BigDecimal amount = subscriptionPriceRepository.findBySubscriptionType(user.getSubscriptionType()).getAmount();
         payment.setAmount(amount);
+        payment.setUserId(user.getId());
         payment.setCurrencyType(CurrencyType.TL);
+        payment.setPaymentDate(LocalDateTime.now());
         return payment;
     }
 
@@ -120,5 +132,10 @@ public class UserService {
         this.subscriptionPriceService=subscriptionPriceService;
     }
 
+    @PostConstruct
+    public void init(){
+        subscriptionPriceService.addSubscriptionPrices();
+        movieService.addMovies();
+    }
 
 }

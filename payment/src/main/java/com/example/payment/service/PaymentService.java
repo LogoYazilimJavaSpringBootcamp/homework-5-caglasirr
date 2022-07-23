@@ -12,7 +12,6 @@ public class PaymentService {
     @Autowired
     private PaymentRepository paymentRepository;
 
-    //dbye kaydet ve respeonse objesini dön
     public Payment createPayment(Payment payment){
         log.info(payment.toString());
         paymentRepository.save(payment);

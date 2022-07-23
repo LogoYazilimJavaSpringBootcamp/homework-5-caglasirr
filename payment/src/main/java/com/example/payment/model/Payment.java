@@ -16,6 +16,7 @@ public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+    private String userId;
     private LocalDateTime paymentDate;
     @Enumerated(EnumType.STRING)
     private CurrencyType currencyType;

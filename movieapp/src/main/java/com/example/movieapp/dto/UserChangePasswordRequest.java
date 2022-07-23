@@ -5,8 +5,6 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class RecommendedMovieRequest {
-    private int movieId;
-    private String comment;
-    private int score;
+public class UserChangePasswordRequest {
+    private String password;
 }

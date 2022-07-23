@@ -4,6 +4,7 @@ import com.example.movieapp.dto.EmailDto;
 import com.example.movieapp.dto.GetRecommendedMovieDto;
 import com.example.movieapp.dto.RecommendedMovieRequest;
 import com.example.movieapp.enums.SubscriptionType;
+import com.example.movieapp.model.Movie;
 import com.example.movieapp.model.RecommendedMovie;
 import com.example.movieapp.model.User;
 import com.example.movieapp.repository.RecommendedMovieRepository;
@@ -38,29 +39,37 @@ public class RecommendedMovieService {
     @Value("${message.usernotfound}")
     private String USERNOTFOUND_MESSAGE;
 
+    @Value("${message.movie.already_added_movie}")
+    private String MOVIE_ALREADY_EXIST;
+
     //Kullanıcının sisteme film eklemesini sağlar.
     public String addRecommendedMovie(int userId, RecommendedMovieRequest recommendedMovieRequest) {
         User user;
+        Movie movie;
         RecommendedMovie recommendedMovie;
         EmailDto emailDto;
         if (userService.userExists(userId)) {
             user = userService.findById(userId);
+            movie = movieService.getMovieById(recommendedMovieRequest.getMovieId());
+
+            //Kullanıcının önceden aynı filmi ekleyip eklemediğinin kontrolünü yapar.
+            if(findByUserAndMovieExists(user, movie)) return MOVIE_ALREADY_EXIST;
+
+            //Requestten alınan bilgiler RecomendedMovie modeline setlenir:
             recommendedMovie = new RecommendedMovie();
-            //Kullanıcının ücretsiz üye olup olmadığının kontrolünü yapar.
+            recommendedMovie.setMovie(movieService.getMovieById(recommendedMovieRequest.getMovieId()));
+            recommendedMovie.setScore(recommendedMovieRequest.getScore());
+            recommendedMovie.setUser(user);
+
+            //Kullanıcının ücretsiz üye olup olmadığının kontrolünü yapar. Ücretsiz üye ise yorumu "0" olarak setler.
             if(!user.getSubscriptionType().equals(SubscriptionType.FREE) ){
-                recommendedMovie.setMovie(movieService.getMovieById(recommendedMovieRequest.getMovieId()));
                 recommendedMovie.setComment(recommendedMovieRequest.getComment());
-                recommendedMovie.setScore(recommendedMovieRequest.getScore());
-                recommendedMovie.setUser(user);
             }else{
                 //Kullanıcı ücretsiz ise eklediği film sayısının 3 adeti geçip geçmediğinin kontrolünü yapar.
                 if(user.getRecommendedMovies().size() >= 3){
                     return MOVIE_NOT_SUCCESS;
                 }
-                recommendedMovie.setMovie(movieService.getMovieById(recommendedMovieRequest.getMovieId()));
-                recommendedMovie.setComment(null);
-                recommendedMovie.setScore(recommendedMovieRequest.getScore());
-                recommendedMovie.setUser(user);
+                recommendedMovie.setComment("0");
             }
 
             //User'ın önerdiği filmi kaydeden method.
@@ -74,14 +83,6 @@ public class RecommendedMovieService {
         return USERNOTFOUND_MESSAGE;
     }
 
-    //Bütün kullanıcılara email gitmesini sağlayan method.
-    public void sendEmailToAllUsers(EmailDto emailDto){
-        for(String email: userService.getAllEmails()){
-            emailDto.setToEmail(email);
-            rabbitTemplate.convertAndSend("movie.email", "movie.email", emailDto);
-        }
-    }
-
     //Id'si verilen user'ın eklediği filmleri getirir.
     public List<GetRecommendedMovieDto> findRecommendedMoviesByUserId(int userId){
         User user = userService.findById(userId);
@@ -93,4 +94,33 @@ public class RecommendedMovieService {
         return recommendedMovieRepository.findAllMovies();
     }
 
+    //Kullanıcının yorumununu ve puanını güncellemesini sağlayan method.
+    public void updateCommentAndScore(int userId, RecommendedMovieRequest request){
+        User foundUser;
+        Movie foundMovie;
+        RecommendedMovie foundRecommendedMovie;
+        if (userService.userExists(userId)){
+            foundUser=userService.findById(userId);
+            foundMovie=movieService.getMovieById(request.getMovieId());
+            if(findByUserAndMovieExists(foundUser,foundMovie) && !foundUser.getSubscriptionType().equals(SubscriptionType.FREE)) {
+                foundRecommendedMovie = recommendedMovieRepository.findByUserAndMovie(foundUser, foundMovie).get();
+                foundRecommendedMovie.setComment(request.getComment());
+                foundRecommendedMovie.setScore(request.getScore());
+                recommendedMovieRepository.save(foundRecommendedMovie);
+            }
+        }
+    }
+
+    //Sisemdeki bütün kullanıcıların eklediği bütün filmleri getiren method.
+    public boolean findByUserAndMovieExists(User user , Movie movie){
+        return recommendedMovieRepository.findByUserAndMovie(user,movie).isPresent();
+    }
+
+    //Bütün kullanıcılara email gitmesini sağlayan method.
+    public void sendEmailToAllUsers(EmailDto emailDto){
+        for(String email: userService.getAllEmails()){
+            emailDto.setToEmail(email);
+            rabbitTemplate.convertAndSend("movie.email", "movie.email", emailDto);
+        }
+    }
 }
