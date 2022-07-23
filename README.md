@@ -29,4 +29,4 @@ gereklidir.)
 * Ödeme işlemi senkron gerçekleşmelidir.
 * Ödeme servisi sadece ödeme bilgilerini kaydeder ve başarılı response döner.
 * Email gönderme işlemi asenkron gerçekleşmelidir.
-* Üyelikler 1-3-6-12 ay olarak alınabilir.
+* Üyelikler 1-3-6-12 ay olarak alınabilir. deneme

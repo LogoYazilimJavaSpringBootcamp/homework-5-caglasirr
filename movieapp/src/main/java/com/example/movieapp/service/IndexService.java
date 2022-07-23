@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-
+//deneme
 @Service
 public class IndexService {
     List<Index> indexList = new ArrayList<>();
