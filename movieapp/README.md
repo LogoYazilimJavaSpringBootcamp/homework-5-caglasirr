@@ -4,7 +4,7 @@ localhost:8082'ye get isteği yollanarak uygulamadaki bütün endpointler ve end
 Aynı zamanda aşağıda da görebilirsiniz :) Uygulama başladığında Movie ve SubscriptionType tablolarına birkaç data eklenir. localhost:8082/users/movies ve localhost:8082/users/subscription-types endpointlerine get isteği yollayarak görüntülenebilir.
 Uygulamada PostgreSQL veritabanı ve RabbitMQ kullanılmıştır.
 
-#### movieapp, email, paymentDto için üç farklı db vardır ve portları aşağıdaki gibidir.
+#### movieapp, email, payment için üç farklı db vardır ve portları aşağıdaki gibidir.
 spring.datasource.url=jdbc:postgresql://localhost:5432/registration
 <br>spring.datasource.url=jdbc:postgresql://localhost:5432/email
 <br>spring.datasource.url=jdbc:postgresql://localhost:5432/payment
