@@ -4,7 +4,6 @@ import com.example.movieapp.client.PaymentClient;
 import com.example.movieapp.dto.*;
 import com.example.movieapp.enums.CurrencyType;
 import com.example.movieapp.model.User;
-import com.example.movieapp.repository.SubscriptionPriceRepository;
 import com.example.movieapp.repository.UserRepository;
 import com.example.movieapp.security.Encryptor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,9 +25,8 @@ public class UserService {
     private PaymentClient paymentClient;
     private Encryptor encryptor;
     private UserRepository userRepository;
-    private SubscriptionPriceRepository subscriptionPriceRepository;
     private MovieService movieService;
-    private SubscriptionPriceService subscriptionPriceService;
+    private SubscriptionTypeService subscriptionTypeService;
 
     @Value("${message.register}")
     private String REGISTER_MESSAGE;
@@ -39,34 +37,42 @@ public class UserService {
     @Value("${message.usernotfound}")
     private String USERNOTFOUND_MESSAGE;
 
+    @Value("${message.useralreadyexists}")
+    private String USER_ALREADY_EXISTS_MESSAGE;
+
     //Kullanıcı sisteme kayıt olur:
     public String register(UserRegisterRequest userRegisterRequest) {
-        //Uygulama başlarken db'de movies tablosuna birkaç film ve subscriptionprice tablosuna bilgiler eklenir.
 
-        //Request'ten alınan datanın yeni oluşturulan user'a set edilmesi:
-        User user = new User();
-        user.setName(userRegisterRequest.getName());
-        user.setSurname(userRegisterRequest.getSurname());
-        user.setEmail(userRegisterRequest.getEmail());
-        user.setSubscriptionType(userRegisterRequest.getSubscriptionType());
+        //Sistemde böyle bir kullanıcının zaten olup olmadığının kontrolünü yapar:
+        boolean isExists = userRepository.findByEmail(userRegisterRequest.getEmail()).isPresent();
+        if(!isExists) {
+            //Request'ten alınan datanın yeni oluşturulan user'a set edilmesi:
+            User user = new User();
+            user.setName(userRegisterRequest.getName());
+            user.setSurname(userRegisterRequest.getSurname());
+            user.setEmail(userRegisterRequest.getEmail());
+            user.setSubscriptionType(subscriptionTypeService.findById(userRegisterRequest.getSubscriptionTypeId()));
 
-        //Şifrenin hash algoritması ile db'ye kaydedilmesini sağlar.
-        user.setPassword(encryptor.encryptGivenPassword(userRegisterRequest.getEmail(), userRegisterRequest.getPassword()));
+            //Şifrenin hash algoritması ile db'ye kaydedilmesini sağlar.
+            user.setPassword(encryptor.encryptGivenPassword(userRegisterRequest.getPassword()));
 
-        //User'ı db'ye kaydeder:
-        userRepository.save(user);
+            //User'ı db'ye kaydeder:
+            userRepository.save(user);
 
-        //Ödeme yapılmasını sağlar.
-        Payment payment = paymentClient.createPayment(preparePaymentInfo(user));
-        log.info(payment.toString());
+            //Ödeme yapılmasını sağlar.
+            PaymentDto paymentDto = paymentClient.createPayment(preparePaymentInfo(user));
+            log.info(paymentDto.toString());
 
-        return REGISTER_MESSAGE;
+            return REGISTER_MESSAGE;
 
+        }
+
+        return USER_ALREADY_EXISTS_MESSAGE;
     }
 
     //Kullanıcı sisteme login olur:
     public String login(UserLoginRequest request){
-           request.setPassword(encryptor.encryptGivenPassword(request.getEmail(), request.getPassword()));
+           request.setPassword(encryptor.encryptGivenPassword(request.getPassword()));
            boolean isExists = userRepository.findByEmailAndPassword(request.getEmail(), request.getPassword()).isPresent();
            if(isExists) {
                return LOGIN_MESSAGE;
@@ -76,21 +82,13 @@ public class UserService {
            }
     }
 
-    //User'ın password değiştirmesini sağlayan method.
-    public void changePassword(int userId, UserChangePasswordRequest userChangePasswordRequest) {
+    public void changeUserInfo(int userId, UserChangeInfoRequest userChangeInfoRequest) {
         User foundUser = userRepository.findById(userId).orElseThrow();
-        foundUser.setPassword(userChangePasswordRequest.getPassword());
+        foundUser.setName(userChangeInfoRequest.getName());
+        foundUser.setPassword(encryptor.encryptGivenPassword(userChangeInfoRequest.getPassword()));
         userRepository.save(foundUser);
     }
 
-    //User'ın name değiştirmesini sağlayan method.
-    public void changeName(int userId, UserChangeNameRequest userChangeNameRequest) {
-        User foundUser = userRepository.findById(userId).orElseThrow();
-        foundUser.setName(userChangeNameRequest.getName());
-        userRepository.save(foundUser);
-    }
-
-    //User'ların hepsini getiren method.
     public List<User> getAllUsers(){
        return userRepository.findAll();
     }
@@ -100,41 +98,35 @@ public class UserService {
         return getAllUsers().stream().map(u -> u.getEmail()).toList();
     }
 
-    //Verilen id'ye sahip user'ın sistemde olup olmadığını dönen method.
-    public boolean userExists(int userId){
-        return userRepository.existsById(userId);
-    }
-
-    //Verilen id'ye sahip user'ı getiren method.
     public User findById(int userId){
         return userRepository.findById(userId).orElseThrow();
     }
 
     //Kullanıcının üyelik tipine göre ödeme bilgisini getiren method.
-    public Payment preparePaymentInfo(User user){
-        Payment payment = new Payment();
-        BigDecimal amount = subscriptionPriceRepository.findBySubscriptionType(user.getSubscriptionType()).getAmount();
-        payment.setAmount(amount);
-        payment.setUserId(user.getId());
-        payment.setCurrencyType(CurrencyType.TL);
-        payment.setPaymentDate(LocalDateTime.now());
-        return payment;
+    public PaymentDto preparePaymentInfo(User user){
+        PaymentDto paymentDto = new PaymentDto();
+        BigDecimal amount = user.getSubscriptionType().getAmount();
+        paymentDto.setAmount(amount);
+        paymentDto.setUserId(user.getId());
+        paymentDto.setCurrencyType(CurrencyType.TL);
+        paymentDto.setPaymentDate(LocalDateTime.now());
+        return paymentDto;
     }
 
     @Autowired
-    public UserService(AmqpTemplate rabbitTemplate, PaymentClient paymentClient, Encryptor encryptor, UserRepository userRepository, SubscriptionPriceRepository subscriptionPriceRepository, MovieService movieService, SubscriptionPriceService subscriptionPriceService) {
-        this.subscriptionPriceRepository=subscriptionPriceRepository;
+    public UserService(AmqpTemplate rabbitTemplate, PaymentClient paymentClient, Encryptor encryptor, UserRepository userRepository, MovieService movieService, SubscriptionTypeService subscriptionTypeService) {
         this.rabbitTemplate = rabbitTemplate;
         this.paymentClient=paymentClient;
         this.encryptor = encryptor;
         this.userRepository = userRepository;
         this.movieService=movieService;
-        this.subscriptionPriceService=subscriptionPriceService;
+        this.subscriptionTypeService=subscriptionTypeService;
     }
 
     @PostConstruct
     public void init(){
-        subscriptionPriceService.addSubscriptionPrices();
+        //Uygulama başlarken db'de movies tablosuna birkaç film ve subscriptionprice tablosuna bilgiler eklenir.
+        subscriptionTypeService.addSubscriptionTypes();
         movieService.addMovies();
     }
 

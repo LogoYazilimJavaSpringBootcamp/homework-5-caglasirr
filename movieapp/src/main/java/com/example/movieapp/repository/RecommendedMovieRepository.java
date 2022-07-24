@@ -14,11 +14,7 @@ import java.util.Optional;
 @Repository
 public interface RecommendedMovieRepository extends JpaRepository<RecommendedMovie,Integer> {
 
-    @Query(value = "SELECT new com.example.movieapp.dto.GetRecommendedMovieDto(r.movie,r.comment,r.score)"+ "FROM RecommendedMovie r where r.user=?1")
-    List<GetRecommendedMovieDto> findAllMoviesByUserId(User user);
-
-    @Query(value = "SELECT new com.example.movieapp.dto.GetRecommendedMovieDto(r.movie,r.comment,r.score)"+ "FROM RecommendedMovie r")
-    List<GetRecommendedMovieDto> findAllMovies();
+    List<RecommendedMovie> findAllByUser(User user);
 
     Optional<RecommendedMovie> findByUserAndMovie(User user, Movie movie);
 

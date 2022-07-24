@@ -1,6 +1,6 @@
 package com.example.email.listener;
 
-import com.example.email.Dto.EmailDto;
+import com.example.email.dto.EmailDto;
 import com.example.email.service.EmailService;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;

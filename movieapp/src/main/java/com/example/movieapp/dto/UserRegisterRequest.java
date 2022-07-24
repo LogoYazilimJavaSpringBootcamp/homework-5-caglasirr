@@ -1,6 +1,5 @@
 package com.example.movieapp.dto;
 
-import com.example.movieapp.enums.SubscriptionType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -14,6 +13,5 @@ public class UserRegisterRequest {
     private String surname;
     private String password;
     private String email;
-    @Enumerated(EnumType.ORDINAL)
-    private SubscriptionType subscriptionType;
+    private int subscriptionTypeId;
 }

@@ -1,6 +1,6 @@
 package com.example.movieapp.client;
 
-import com.example.movieapp.dto.Payment;
+import com.example.movieapp.dto.PaymentDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface PaymentClient {
 
     @PostMapping(value="/payments")
-    Payment createPayment(@RequestBody Payment payment); //sadece signature ama aynı olmak zorunda
+    PaymentDto createPayment(@RequestBody PaymentDto paymentDto); //sadece signature ama aynı olmak zorunda
 
 
     //@PostMapping(value="/payments")

@@ -14,12 +14,10 @@ public class MovieService {
     @Autowired
     private MovieRepository movieRepository;
 
-    //Veritabanındaki bütün filmleri getirir.
     public List<Movie> getAllMovies(){
         return movieRepository.findAll();
     }
 
-    //Movie id'si verilen filmi getirir.
     public Movie getMovieById(int movieId){
         return movieRepository.findById(movieId).orElse(null);
     }

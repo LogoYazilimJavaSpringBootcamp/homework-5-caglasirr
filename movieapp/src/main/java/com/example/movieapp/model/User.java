@@ -1,6 +1,5 @@
 package com.example.movieapp.model;
 
-import com.example.movieapp.enums.SubscriptionType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,7 +23,8 @@ public class User {
     private String surname;
     private String password;
     private String email;
-    @Enumerated(EnumType.ORDINAL)
+    //@Enumerated(EnumType.ORDINAL)
+    @OneToOne
     private SubscriptionType subscriptionType;
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "user", orphanRemoval = true)
     private List<RecommendedMovie> recommendedMovies;

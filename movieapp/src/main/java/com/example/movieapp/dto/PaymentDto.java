@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 
-public class Payment {
+public class PaymentDto {
     private int userId;
     private LocalDateTime paymentDate;
     @Enumerated(EnumType.STRING)
