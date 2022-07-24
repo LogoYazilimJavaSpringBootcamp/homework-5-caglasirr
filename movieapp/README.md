@@ -7,7 +7,7 @@ Uygulamada PostgreSQL veritabanı ve RabbitMQ kullanılmıştır.
 #### movieapp, email, paymentDto için üç farklı db vardır ve portları aşağıdaki gibidir.
 spring.datasource.url=jdbc:postgresql://localhost:5432/registration
 <br>spring.datasource.url=jdbc:postgresql://localhost:5432/email
-<br>spring.datasource.url=jdbc:postgresql://localhost:5432/paymentDto
+<br>spring.datasource.url=jdbc:postgresql://localhost:5432/payment
 
 #### RabbitMQ portu: localhost:15672
 
