@@ -1,16 +1,15 @@
 ## movieapp hakkında
 
 localhost:8082'ye get isteği yollanarak uygulamadaki bütün endpointler ve endpointe gitmek için kullanılacak olan örnek datalar elde edilebilir. 
-Aynı zamanda aşağıda da görebilirsiniz :) Uygulama başladığında Movie ve SubscriptionType tablolarına birkaç data eklenir. SubscriptionType için localhost:8082/movieapp/subscription endpointine get isteği yollayarak görüntüleyebilirsiniz.
-Database'de kullanıcının ekleyebileceği filmleri localhost:8082/movieapp/movies endpointine get isteği yollayarak görüntüleyebilirsiniz. Akış olarak verilen endpointler aşağıdaki sıra ile denenebilir. Uygulamada PostgreSQL veritabanı ve RabbitMQ kullanılmıştır.
+Aynı zamanda aşağıda da görebilirsiniz :) Uygulama başladığında Movie ve SubscriptionType tablolarına birkaç data eklenir. localhost:8082/users/movies ve localhost:8082/users/subscription-types endpointlerine get isteği yollayarak görüntülenebilir.
+Uygulamada PostgreSQL veritabanı ve RabbitMQ kullanılmıştır.
 
 #### movieapp, email, paymentDto için üç farklı db vardır ve portları aşağıdaki gibidir.
 spring.datasource.url=jdbc:postgresql://localhost:5432/registration
 <br>spring.datasource.url=jdbc:postgresql://localhost:5432/email
 <br>spring.datasource.url=jdbc:postgresql://localhost:5432/paymentDto
 
-#### RabbitMQ portu:
-http://localhost:15672
+#### RabbitMQ portu: localhost:15672
 
 
 <pre>
